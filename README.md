@@ -1,10 +1,12 @@
 # SSHDesk · 本地桌面 SSH 运维客户端
 
-![tests](https://img.shields.io/badge/tests-88%20passed-8b7cf6)
-![python](https://img.shields.io/badge/python-3.10%2B-5aa2ff)
-![license](https://img.shields.io/badge/license-MIT-8b7cf6)
+![tests](https://img.shields.io/badge/tests-88%20passed-7b9df0)
+![python](https://img.shields.io/badge/python-3.10%2B-4a6a9e)
+![license](https://img.shields.io/badge/license-MIT-4a6a9e)
 
-📽 **不想读字？先看动图演示：[docs/DEMO.md](docs/DEMO.md)**（登录、终端、状态面板，三段 GIF）
+📽 **不想读字？先看动图演示：[docs/DEMO.md](docs/DEMO.md)**（命令行、登录、终端、状态面板，四段 GIF）
+
+🎨 **界面为什么长这样：[docs/DESIGN-AUDIT.md](docs/DESIGN-AUDIT.md)**（星空配色推导 + 23 条规范逐项自查）
 
 一个跑在自己电脑上的 SSH 客户端：管多台 Linux 服务器、真终端交互、传文件、看监控、
 连不上时告诉你卡在哪一步。不用装 XShell / SecureCRT，也不需要给服务器装任何 Web 面板。
@@ -73,7 +75,7 @@ Windows 双击 `start.bat`，macOS / Linux 执行 `bash start.sh` 即可（会�
 图形界面点「+ 新增」，或者用命令行：
 
 ```bash
-python -m sshdesk add -n 阿里云成都 -H 47.108.x.x -u root -a key -k ~/.ssh/id_ed25519 -g 生产
+python -m sshdesk add -n 阿里云成都 -H 203.0.113.10 -u root -a key -k ~/.ssh/id_ed25519 -g 生产
 python -m sshdesk test 阿里云成都          # 先诊断连通性
 python -m sshdesk test 阿里云成都 --login  # 连上后再做服务器体检
 python -m sshdesk gui                      # 打开界面操作

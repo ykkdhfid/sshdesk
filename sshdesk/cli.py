@@ -78,6 +78,14 @@ def _connect(server: ServerConfig, args: argparse.Namespace, trust: bool = False
     return connection
 
 
+def _pad(text: str, width: int) -> str:
+    """按终端显示宽度补空格：中文/全角算 2 列，避免表格错位。"""
+    from unicodedata import east_asian_width
+
+    w = sum(2 if east_asian_width(ch) in "WF" else 1 for ch in text)
+    return text + " " * max(0, width - w)
+
+
 # ---------------------------------------------------------------------- 命令
 def cmd_list(args: argparse.Namespace) -> int:
     store = _store()
@@ -85,11 +93,12 @@ def cmd_list(args: argparse.Namespace) -> int:
     if not servers:
         print("还没有服务器。用 `python -m sshdesk add` 添加一台，或运行 `python -m sshdesk gui`。")
         return 0
-    print(f"{'名称':<16}{'地址':<28}{'认证':<8}{'分组':<8}最后连接")
+    print(_pad("名称", 16) + _pad("地址", 28) + _pad("认证", 10) + _pad("分组", 10) + "最后连接")
     print("-" * 78)
     for s in servers:
         last = time.strftime("%m-%d %H:%M", time.localtime(s.last_connected_at)) if s.last_connected_at else "从未"
-        print(f"{s.name:<16}{s.endpoint:<28}{s.auth_type:<8}{s.group:<8}{last}")
+        print(_pad(s.name, 16) + _pad(s.endpoint, 28) + _pad(s.auth_type, 10)
+              + _pad(s.group, 10) + last)
     return 0
 
 

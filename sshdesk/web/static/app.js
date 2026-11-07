@@ -69,6 +69,10 @@
       $("login-error").textContent = "请先填写访问令牌";
       return;
     }
+    const btn = $("login-btn");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "验证中…";
     try {
       await api("/api/login", {
         method: "POST",
@@ -82,6 +86,9 @@
     } catch (e) {
       $("login-error").textContent =
         e.status === 429 ? "尝试次数过多，请稍后再试" : "令牌不正确，请核对后重试";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
     }
   }
 
@@ -135,23 +142,24 @@
     state.term = new Terminal({
       fontFamily:
         '"JetBrains Mono", "Cascadia Mono", "SF Mono", Menlo, Consolas, "Noto Sans Mono CJK SC", monospace',
-      fontSize: isMobile ? 12 : 14,
+      // 宽屏上字符放大，别让 1440 的终端挤成蚂蚁字
+      fontSize: isMobile ? 12 : (window.innerWidth >= 1200 ? 16 : 14),
       lineHeight: 1.25,
       cursorBlink: true,
       scrollback: 5000,
       convertEol: false,
       allowProposedApi: false,
       theme: {
-        background: "#12101b",
-        foreground: "#e9e4f7",
-        cursor: "#a78bfa",
-        cursorAccent: "#12101b",
-        selectionBackground: "#3a2f5e",
-        black: "#3b3653", red: "#f8748f", green: "#62d6a6", yellow: "#e8c170",
-        blue: "#5aa2ff", magenta: "#c4a5ff", cyan: "#79d2e6", white: "#e9e4f7",
-        brightBlack: "#5a5478", brightRed: "#ff93a7", brightGreen: "#7fe4bb",
-        brightYellow: "#f4d59a", brightBlue: "#7ab8ff", brightMagenta: "#d8bfff",
-        brightCyan: "#9fe0f0", brightWhite: "#ffffff",
+        background: "#04060d",
+        foreground: "#e6eaf5",
+        cursor: "#8fb0f5",
+        cursorAccent: "#04060d",
+        selectionBackground: "#1d2b4a",
+        black: "#243049", red: "#f0708a", green: "#5fd1a0", yellow: "#e0b76a",
+        blue: "#7fa6ff", magenta: "#a9a0e8", cyan: "#69c8d8", white: "#e6eaf5",
+        brightBlack: "#5c6a86", brightRed: "#ff8fa3", brightGreen: "#7fdfb4",
+        brightYellow: "#f0cd92", brightBlue: "#9dbcff", brightMagenta: "#c4bbff",
+        brightCyan: "#8fdce9", brightWhite: "#ffffff",
       },
     });
     state.fit = new FitAddon.FitAddon();

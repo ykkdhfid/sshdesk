@@ -8,18 +8,19 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import font as tkfont, ttk
 
-BG = "#12101b"
-PANEL = "#1a1727"
-PANEL_ALT = "#232036"
-BORDER = "#332c4c"
-FG = "#e9e4f7"
-FG_MUTED = "#9a92b8"
-ACCENT = "#8b7cf6"
-ACCENT_2 = "#5aa2ff"
-GREEN = "#62d6a6"
-RED = "#f8748f"
-YELLOW = "#e8c170"
-PURPLE = "#c4a5ff"
+# 星空：深冷蓝黑 + 低饱和星光；桌面端与 Web 端保持同一套色
+BG = "#070a12"
+PANEL = "#0d1220"
+PANEL_ALT = "#131a2b"
+BORDER = "#1e2740"
+FG = "#e6eaf5"
+FG_MUTED = "#9aa3b8"
+ACCENT = "#7b9df0"
+ACCENT_2 = "#94b4ff"
+GREEN = "#5fd1a0"
+RED = "#f0708a"
+YELLOW = "#e0b76a"
+PURPLE = "#a9a0e8"
 
 MONO_CANDIDATES = [
     "JetBrains Mono", "Cascadia Mono", "Sarasa Mono SC", "Consolas",

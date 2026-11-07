@@ -10,8 +10,8 @@ from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sshdesk.core.terminal_screen import ScreenBuffer, char_width  # noqa: E402
 
-BG = "#12101b"
-DEFAULT_FG = "#e9e4f7"
+BG = "#04060d"
+DEFAULT_FG = "#e6eaf5"
 MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
 CJK = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 
@@ -49,7 +49,7 @@ def render(buffer: ScreenBuffer, cw: int = 11, line_h: int = 22, pad: int = 18) 
     draw = ImageDraw.Draw(image)
     try:
         mono = ImageFont.truetype(MONO, 16)
-        cjk = ImageFont.truetype(CJK, 17, index=0)
+        cjk = ImageFont.truetype(CJK, 19, index=0)  # 中文占两格，字号按 2 格宽取
     except OSError:
         mono = cjk = ImageFont.load_default()
 

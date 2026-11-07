@@ -19,9 +19,9 @@ from ..core.client import SSHConnection, SSHError
 from ..core.terminal_screen import ScreenBuffer, char_width
 from .theme import mono_font
 
-TERM_BG = "#12101b"
-TERM_FG = "#e9e4f7"
-TERM_CURSOR = "#a78bfa"
+TERM_BG = "#04060d"
+TERM_FG = "#e6eaf5"
+TERM_CURSOR = "#8fb0f5"
 
 SPECIAL_KEYS = {
     "Up": "\x1b[A", "Down": "\x1b[B", "Right": "\x1b[C", "Left": "\x1b[D",
