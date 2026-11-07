@@ -52,7 +52,62 @@
   }
 
   /* ---------------------------------------------------------------- 登录 */
+  /* 星点：每颗是独立元素，位置随机、相位随机，所以是"一闪一闪"而不是整片呼吸。
+     落点要躲开输入栏和内容块——星点压在 token 输入框上会让人以为屏幕有坏点。 */
+  const STAR_AVOID = "input, textarea, button, .login-box, .server-card, .term-head, .tools";
+
+  function avoidRects() {
+    return [...document.querySelectorAll(STAR_AVOID)]
+      .map((el) => el.getBoundingClientRect())
+      .filter((r) => r.width > 0 && r.height > 0);
+  }
+
+  function initStars() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const rects = avoidRects();
+    const total = W < 600 ? 18 : 26;
+
+    document.querySelectorAll(".starfield").forEach((view) => {
+      view.querySelector(".star-layer")?.remove();
+      const layer = document.createElement("div");
+      layer.className = "star-layer";
+
+      for (let i = 0; i < total; i++) {
+        let x = 0;
+        let y = 0;
+        let ok = false;
+        for (let tries = 0; tries < 40 && !ok; tries++) {
+          x = Math.random() * W;
+          y = Math.random() * H;
+          ok =
+            y > 64 && // 顶栏下面才开始有星
+            !rects.some(
+              (r) => x > r.left - 26 && x < r.right + 26 && y > r.top - 26 && y < r.bottom + 26,
+            );
+        }
+        if (!ok) continue;
+
+        const star = document.createElement("div");
+        const rare = Math.random() < 0.22; // 约五分之一是"偶尔才出现"的
+        star.className = rare ? "star rare" : "star";
+        star.style.left = `${((x / W) * 100).toFixed(2)}%`;
+        star.style.top = `${((y / H) * 100).toFixed(2)}%`;
+        star.style.setProperty("--o", (0.3 + Math.random() * 0.55).toFixed(2));
+        star.style.setProperty(
+          "--dur",
+          `${(rare ? 14 + Math.random() * 10 : 3.4 + Math.random() * 4.2).toFixed(2)}s`,
+        );
+        star.style.setProperty("--delay", (Math.random() * 8).toFixed(2) + "s");
+        layer.appendChild(star);
+      }
+
+      view.appendChild(layer);
+    });
+  }
+
   async function boot() {
+    initStars();
     try {
       state.servers = await api("/api/servers");
       renderList();
@@ -365,7 +420,10 @@
         setTimeout(fitNow, 120);
       });
     }
-    window.addEventListener("resize", () => {
+    let starTimer = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(starTimer);
+    starTimer = setTimeout(initStars, 300);
       apply();
       setTimeout(fitNow, 120);
     });

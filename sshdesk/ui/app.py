@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import threading
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
@@ -65,7 +66,8 @@ def _star_color(o: float) -> str:
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
-def paint_starscape(canvas: tk.Canvas, title: str = "", body: str = "") -> None:
+def paint_starscape(canvas: tk.Canvas, title: str = "", body: str = "",
+                    phase: float = 0.0) -> None:
     canvas.delete("all")
     w, h = canvas.winfo_width(), canvas.winfo_height()
     if w < 2 or h < 2:
@@ -74,10 +76,12 @@ def paint_starscape(canvas: tk.Canvas, title: str = "", body: str = "") -> None:
         canvas.create_line(x, 0, x, h, fill=_GRID)
     for y in range(0, h, 40):
         canvas.create_line(0, y, w, y, fill=_GRID)
-    for px, py, o in STARS:
+    for i, (px, py, o) in enumerate(STARS):
+        # 每颗的相位错开 1.7 弧度，周期约 5 秒：一颗接一颗地闪，不是整片一起呼吸
+        glow = 0.18 + 0.82 * (0.5 + 0.5 * math.sin(phase * 1.2 + i * 1.7)) ** 2
         x, y = int(w * px / 100), int(h * py / 100)
         if 0 <= x < w - 1 and 0 <= y < h - 1:
-            c = _star_color(o)
+            c = _star_color(o * glow)
             canvas.create_oval(x, y, x + 1, y + 1, fill=c, outline=c)
     if title:
         canvas.create_text(w // 2, h // 2 - 44, text=title, fill=FG,
@@ -109,6 +113,19 @@ class App(tk.Tk):
         if demo:
             self._open_demo()
 
+    # -------------------------------------------------------------- 星空动画
+    def _tick_stars(self, phase: float = 0.0) -> None:
+        """空态页的星空每 120ms 重画一帧。Tk 的 Canvas 没有透明度，
+        所以用颜色插值模拟闪烁——亮度低时点会沉回底色，看起来就是暗了。"""
+        if not self.empty_canvas.winfo_exists():
+            return
+        if self._empty_visible:
+            paint_starscape(self.empty_canvas, "还没有打开的会话",
+                            "在左侧选中一台服务器，点「连接」或直接双击。\n"
+                            "首次连接会核对主机指纹；连不上时点「连接诊断」按步骤排查。",
+                            phase)
+        self._star_job = self.after(120, lambda: self._tick_stars(phase + 0.12))
+
     # ------------------------------------------------------------------ 布局
     def _build_layout(self) -> None:
         header = tk.Frame(self, bg=PANEL, height=56)
@@ -137,18 +154,12 @@ class App(tk.Tk):
 
         self.empty_state = tk.Frame(self.notebook, bg=BG)
         self.notebook.add(self.empty_state, text="   ")
-        self._empty_visible = True
         self.empty_canvas = tk.Canvas(self.empty_state, bg=BG, highlightthickness=0, bd=0)
         self.empty_canvas.pack(fill="both", expand=True)
-        self.empty_canvas.bind(
-            "<Configure>",
-            lambda _e: paint_starscape(
-                self.empty_canvas,
-                "还没有打开的会话",
-                "在左侧选中一台服务器，点「连接」或直接双击。\n"
-                "首次连接会核对主机指纹；连不上时点「连接诊断」按步骤排查。",
-            ),
-        )
+        self._empty_visible = True
+        self._star_job = None
+        self.empty_canvas.bind("<Configure>", lambda _e: self._tick_stars(0.0))
+        self.after(300, self._tick_stars)
         # ttk.Notebook 只有 hide()，没有 show()，所以空状态页用 add/forget 动态管理
 
         status_bar = tk.Frame(self, bg=PANEL, height=30)

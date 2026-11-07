@@ -77,30 +77,49 @@ code {
   font-size: 12px;
 }
 
-/* 星空底：两层含义叠在一起——
+/* 星空底，分三层叠：星云在最底下，网格在中层，星点在最上层。
    1) 深空底色：带蓝相的近黑，不是纯黑；
-   2) 一张几乎看不见的字符网格：40px 见方，透明度 .028。
-   终端本来就是按行列对齐的纯文本系统，背景理应是那张坐标纸。
-   星点是 1px 硬点（不做柔光），像设备指示灯，不像撒糖；
-   位置避开顶栏（0–56px 会被 topbar 盖住）与正文区。 */
+   2) 星云：三团极低饱和的蓝青雾（透明度 .04~.055），负责"深邃"，不负责"好看"；
+   3) 字符网格：40px 见方，透明度 .028 —— 终端按行列对齐，背景就是那张坐标纸。
+   星点不再写在 background-image 里：要让它们各自闪、各自随机、还要躲开输入栏，
+   只能做成独立元素，由 app.js 的 initStars() 生成（见下方 .star）。 */
 .starfield {
+  position: relative;
   background-color: var(--bg);
   background-image:
-    radial-gradient(1px 1px at 8% 13%, rgba(214, 228, 255, 0.8), transparent),
-    radial-gradient(1px 1px at 31% 18%, rgba(214, 228, 255, 0.44), transparent),
-    radial-gradient(1px 1px at 58% 11%, rgba(214, 228, 255, 0.62), transparent),
-    radial-gradient(1px 1px at 90% 22%, rgba(214, 228, 255, 0.74), transparent),
-    radial-gradient(1px 1px at 46% 34%, rgba(214, 228, 255, 0.34), transparent),
-    radial-gradient(1px 1px at 18% 64%, rgba(214, 228, 255, 0.32), transparent),
-    radial-gradient(1px 1px at 3% 45%, rgba(214, 228, 255, 0.46), transparent),
-    radial-gradient(1px 1px at 96% 53%, rgba(214, 228, 255, 0.48), transparent),
-    radial-gradient(1px 1px at 10% 87%, rgba(214, 228, 255, 0.7), transparent),
-    radial-gradient(1px 1px at 43% 96%, rgba(214, 228, 255, 0.42), transparent),
-    radial-gradient(1px 1px at 77% 90%, rgba(214, 228, 255, 0.78), transparent),
-    radial-gradient(1px 1px at 93% 97%, rgba(214, 228, 255, 0.54), transparent),
+    radial-gradient(62% 46% at 12% 5%, rgba(78, 104, 168, .085), transparent 72%),
+    radial-gradient(54% 40% at 88% 21%, rgba(58, 104, 132, .062), transparent 74%),
+    radial-gradient(68% 48% at 40% 92%, rgba(66, 84, 156, .055), transparent 78%),
     repeating-linear-gradient(0deg, rgba(120, 145, 190, .028) 0 1px, transparent 1px 40px),
     repeating-linear-gradient(90deg, rgba(120, 145, 190, .028) 0 1px, transparent 1px 40px);
-  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+}
+
+.star-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+.star {
+  position: absolute;
+  width: 1px; height: 1px;
+  background: rgb(214, 228, 255);
+  opacity: calc(var(--o) * .2);
+  animation: twinkle var(--dur) ease-in-out var(--delay) infinite;
+  will-change: opacity;
+}
+
+/* 长亮短暗：一半以上时间是暗的，只在中间亮一下，才像"闪"。
+   线性呼吸会变成呼吸灯，那是设备状态，不是星。 */
+@keyframes twinkle {
+  0%, 100% { opacity: calc(var(--o) * .18); }
+  38%, 52% { opacity: var(--o); }
+}
+
+/* 偶发星：大部分时间不存在，隔十几二十秒冒出来一次 */
+.star.rare { animation-name: blink; }
+
+@keyframes blink {
+  0%, 10% { opacity: 0; }
+  16%, 26% { opacity: var(--o); }
+  34%, 100% { opacity: 0; }
 }
 
 /* ---------------- 登录 ---------------- */
@@ -390,4 +409,6 @@ button {
   * { animation-duration: .01ms !important; animation-iteration-count: 1 !important;
       transition-duration: .01ms !important; scroll-behavior: auto !important; }
   .server-card:hover .chev { transform: none; }
+  /* 星点：关掉闪烁，但保留亮度——星空还在，只是不闪 */
+  .star { animation: none !important; opacity: var(--o); }
 }
