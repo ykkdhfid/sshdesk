@@ -33,12 +33,12 @@ UI_CANDIDATES = [
 ]
 
 
-def mono_font(size: int = 10) -> tuple[str, int]:
+def mono_font(size: int = 10, weight: str = "normal") -> tuple[str, int, str]:
     available = set(tkfont.families())
     for name in MONO_CANDIDATES:
         if name in available:
-            return (name, size)
-    return ("TkFixedFont", size)
+            return (name, size, weight)
+    return ("TkFixedFont", size, weight)
 
 
 def ui_font(size: int = 9, weight: str = "normal") -> tuple[str, int, str]:
@@ -72,9 +72,9 @@ def apply_theme(root: tk.Misc) -> None:
                     font=ui_font(18, "bold"))
     style.configure("Accent.TButton", background=ACCENT, foreground="#ffffff",
                     borderwidth=0, focusthickness=0, padding=(12, 6))
-    style.map("Accent.TButton", background=[("active", "#a695ff"), ("disabled", "#332c4c")])
+    style.map("Accent.TButton", background=[("active", ACCENT_2), ("disabled", BORDER)])
     style.configure("TButton", background=PANEL_ALT, foreground=FG, borderwidth=0, padding=(10, 5))
-    style.map("TButton", background=[("active", BORDER), ("disabled", "#232036")])
+    style.map("TButton", background=[("active", BORDER), ("disabled", PANEL_ALT)])
     style.configure("Ghost.TButton", background=BG, foreground=FG_MUTED, borderwidth=0, padding=(8, 4))
     style.map("Ghost.TButton", background=[("active", PANEL)])
     style.configure("TEntry", fieldbackground=PANEL_ALT, foreground=FG,

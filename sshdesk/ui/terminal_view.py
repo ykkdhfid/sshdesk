@@ -68,7 +68,7 @@ class TerminalView(ttk.Frame):
         self.text = tk.Text(
             self, bg=TERM_BG, fg=TERM_FG, insertbackground=TERM_FG, font=mono,
             wrap="none", undo=False, highlightthickness=0, borderwidth=0,
-            padx=8, pady=6, selectbackground="#3a2f5e", selectforeground="#ffffff",
+            padx=8, pady=6, selectbackground="#1d2b4a", selectforeground="#ffffff",
             cursor="xterm", spacing1=0, spacing2=0, spacing3=0,
         )
         scroll = ttk.Scrollbar(self, orient="vertical", command=self.text.yview)

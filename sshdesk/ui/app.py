@@ -47,6 +47,47 @@ DEMO_SCREEN = (
 )
 
 
+# 空态背景：深空 + 40px 字符网格 + 1px 硬星点。
+# 桌面端不能像 CSS 那样叠背景图，只能在 Canvas 上把这些画出来；
+# 位置与 Web 端保持同一套百分比，两边看起来才是同一个世界。
+STARS = [
+    (8, 13, .80), (31, 18, .44), (58, 11, .62), (90, 22, .74),
+    (46, 34, .34), (18, 64, .32),
+    (3, 45, .46), (96, 53, .48),
+    (10, 87, .70), (43, 96, .42), (77, 90, .78), (93, 97, .54),
+]
+_GRID = "#0b0f17"
+
+
+def _star_color(o: float) -> str:
+    base, top = (7, 10, 18), (214, 228, 255)
+    r, g, b = (int(a + (b_ - a) * o) for a, b_ in zip(base, top))
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def paint_starscape(canvas: tk.Canvas, title: str = "", body: str = "") -> None:
+    canvas.delete("all")
+    w, h = canvas.winfo_width(), canvas.winfo_height()
+    if w < 2 or h < 2:
+        return
+    for x in range(0, w, 40):
+        canvas.create_line(x, 0, x, h, fill=_GRID)
+    for y in range(0, h, 40):
+        canvas.create_line(0, y, w, y, fill=_GRID)
+    for px, py, o in STARS:
+        x, y = int(w * px / 100), int(h * py / 100)
+        if 0 <= x < w - 1 and 0 <= y < h - 1:
+            c = _star_color(o)
+            canvas.create_oval(x, y, x + 1, y + 1, fill=c, outline=c)
+    if title:
+        canvas.create_text(w // 2, h // 2 - 44, text=title, fill=FG,
+                           font=ui_font(16, "bold"))
+    if body:
+        canvas.create_text(w // 2, h // 2 + 6, text=body, fill=FG_MUTED,
+                           font=ui_font(10), justify="center", width=max(240, w - 120))
+
+
+
 class App(tk.Tk):
     def __init__(self, demo: bool = False) -> None:
         super().__init__()
@@ -73,8 +114,9 @@ class App(tk.Tk):
         header = tk.Frame(self, bg=PANEL, height=56)
         header.pack(fill="x")
         header.pack_propagate(False)
+        # 产品名用等宽字：这套界面的第一句话就该是"这是个文本系统"
         tk.Label(header, text="SSHDesk", bg=PANEL, fg=ACCENT,
-                 font=ui_font(15, "bold")).pack(side="left", padx=(18, 8))
+                 font=mono_font(15, "bold")).pack(side="left", padx=(18, 8))
         tk.Label(header, text="本地桌面 SSH 运维客户端", bg=PANEL, fg=FG_MUTED,
                  font=ui_font(9)).pack(side="left", pady=(4, 0))
         ttk.Button(header, text="批量执行", style="Ghost.TButton",
@@ -96,12 +138,17 @@ class App(tk.Tk):
         self.empty_state = tk.Frame(self.notebook, bg=BG)
         self.notebook.add(self.empty_state, text="   ")
         self._empty_visible = True
-        tk.Label(self.empty_state, text="还没有打开的会话", bg=BG, fg=FG,
-                 font=ui_font(16, "bold")).pack(pady=(150, 8))
-        tk.Label(self.empty_state,
-                 text="在左侧选中一台服务器，点「连接」或直接双击。\n"
-                      "首次连接会核对主机指纹；连不上时点「连接诊断」按步骤排查。",
-                 bg=BG, fg=FG_MUTED, font=ui_font(10), justify="center").pack()
+        self.empty_canvas = tk.Canvas(self.empty_state, bg=BG, highlightthickness=0, bd=0)
+        self.empty_canvas.pack(fill="both", expand=True)
+        self.empty_canvas.bind(
+            "<Configure>",
+            lambda _e: paint_starscape(
+                self.empty_canvas,
+                "还没有打开的会话",
+                "在左侧选中一台服务器，点「连接」或直接双击。\n"
+                "首次连接会核对主机指纹；连不上时点「连接诊断」按步骤排查。",
+            ),
+        )
         # ttk.Notebook 只有 hide()，没有 show()，所以空状态页用 add/forget 动态管理
 
         status_bar = tk.Frame(self, bg=PANEL, height=30)
