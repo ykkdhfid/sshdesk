@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#12101b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>SSHDesk · 远程终端</title>
+  <link rel="stylesheet" href="/static/vendor/xterm.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- 登录 -->
+  <section id="login-view" class="view">
+    <div class="login-box">
+      <div class="brand">
+        <div class="brand-mark">›_</div>
+        <div>
+          <h1>SSHDesk</h1>
+          <p class="muted">远程服务器终端 · Web 版</p>
+        </div>
+      </div>
+      <label class="field">
+        <span>访问令牌</span>
+        <input id="token-input" type="password" autocomplete="off" placeholder="粘贴 ~/.sshdesk/web_token 的内容">
+      </label>
+      <button id="login-btn" class="primary">进入</button>
+      <p id="login-error" class="error"></p>
+      <p class="hint">令牌保存在服务器本机 <code>~/.sshdesk/web_token</code>，启动时的日志里也会打印一次。</p>
+    </div>
+  </section>
+
+  <!-- 服务器列表 -->
+  <section id="list-view" class="view hidden">
+    <header class="topbar">
+      <div class="brand small"><span class="brand-mark">›_</span><span>SSHDesk</span></div>
+      <button id="logout-btn" class="ghost">退出</button>
+    </header>
+    <div class="list-head">
+      <h2>选择服务器</h2>
+      <span id="server-count" class="muted"></span>
+    </div>
+    <div id="server-list" class="server-list"></div>
+    <div id="list-empty" class="empty hidden">
+      <p>还没有服务器</p>
+      <p class="muted">在电脑上执行 <code>python -m sshdesk add</code> 添加，然后刷新本页。</p>
+    </div>
+  </section>
+
+  <!-- 终端 -->
+  <section id="term-view" class="view hidden">
+    <header class="termbar">
+      <button id="back-btn" class="ghost icon">‹</button>
+      <div class="term-title">
+        <span id="term-name">终端</span>
+        <span id="conn-state" class="state">连接中…</span>
+      </div>
+      <button id="info-btn" class="ghost textbtn" title="系统状态">状态</button>
+      <button id="reconnect-btn" class="ghost icon hidden" title="重连">⟳</button>
+    </header>
+    <div id="terminal"></div>
+
+    <div id="sysinfo" class="sheet hidden">
+      <div class="sheet-head">
+        <strong>系统状态</strong>
+        <button id="close-info" class="ghost">关闭</button>
+      </div>
+      <div id="sysinfo-body" class="sheet-body">正在读取…</div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/vendor/xterm.js"></script>
+  <script src="/static/vendor/addon-fit.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
