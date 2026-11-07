@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import os
 import socket
 import time
 from dataclasses import dataclass
@@ -79,6 +80,13 @@ class SSHConnection:
                 pass
         self._client.set_missing_host_key_policy(self._make_policy())
 
+        if server.auth_type == "password" and not password and not server.jump_endpoint()[0]:
+            raise SSHError(
+                "没有可用的登录密码",
+                hint="添加服务器时用 --password 保存密码，或设置环境变量 SSHDESK_PASSWORD；"
+                     "也可以先执行 python -m sshdesk test 机器名 --login --trust-host 验证一次凭据。",
+            )
+
         sock = None
         try:
             jump_host, jump_port = server.jump_endpoint()
@@ -141,12 +149,17 @@ class SSHConnection:
     def _resolve_password(self) -> str | None:
         if self.server.auth_type != "password":
             return None
-        if not self.server.password_ref:
-            return None
-        try:
-            return self.credentials.get_password(self.server.password_ref)
-        except CredentialError:
-            return None
+        if self.server.password_ref:
+            try:
+                stored = self.credentials.get_password(self.server.password_ref)
+                if stored:
+                    return stored
+            except CredentialError:
+                pass
+        # 兜底读环境变量：CLI、Web、批量执行共用同一条取密码的路径。
+        # 之前只有 CLI 的 _connect() 认这个变量，Web 和 run_batch 拿到的永远是 None，
+        # 报出来的还是"无法连接服务器"——用户根本看不出是缺密码。
+        return os.environ.get("SSHDESK_PASSWORD") or None
 
     def _load_key(self):
         try:

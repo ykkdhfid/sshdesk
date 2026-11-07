@@ -8,6 +8,8 @@
 
 🎨 **界面为什么长这样：[docs/DESIGN-AUDIT.md](docs/DESIGN-AUDIT.md)**（星空配色推导 + 23 条规范逐项自查）
 
+🔌 **前后端到底通没通：[docs/E2E-CHECK.md](docs/E2E-CHECK.md)**（接口 20 项 + 浏览器流程 26 项，含 4401/4404/4502 语义）
+
 一个跑在自己电脑上的 SSH 客户端：管多台 Linux 服务器、真终端交互、传文件、看监控、
 连不上时告诉你卡在哪一步。不用装 XShell / SecureCRT，也不需要给服务器装任何 Web 面板。
 

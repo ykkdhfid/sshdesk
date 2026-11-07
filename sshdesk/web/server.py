@@ -317,8 +317,11 @@ def _auto_trust_handler(app: FastAPI):
             return True
         raise SSHError(
             "首次连接的主机尚未信任",
-            hint="请先在这台机器上用 `python -m sshdesk test 机器名 --trust-host` 确认一次指纹；"
-                 "确认无误后，Web 端会自动复用 ~/.sshdesk/known_hosts。",
+            # 必须带 --login：光跑 test 只做端口/banner 诊断，不会走认证握手，
+            # 也就不会写 known_hosts —— 少了这个参数，用户照着命令敲一辈子也信任不上。
+            hint="请先在这台机器上跑 `python -m sshdesk test 机器名 --login --trust-host`，"
+                 "它会打印主机指纹并记进 ~/.sshdesk/known_hosts；"
+                 "确认无误后 Web 端会自动复用这份记录。",
         )
 
     return handler
