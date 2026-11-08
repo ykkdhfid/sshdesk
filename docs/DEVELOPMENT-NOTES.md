@@ -220,12 +220,38 @@ SSH 命令行基本用不到中文，我觉得这个交换划算，就留下了�
 
 ### 14. 光标跑到窗口最下面，还复制粘贴失灵
 
-这是后面补的两件事，起因是用户说「光标在下面」和「不能复制粘贴」。
+这是后面补的两件事，起因是用户说「光标在下面」「看不到光标」和「不能复制粘贴」。
 
-光标那个其实不是光标：tkinter 的 `Text` 控件自带一个插入符（一条竖线），跟着鼠标跑，
-跟终端光标（背景反色的方块）是两套东西。`Text(..., insertwidth=0)` 把它去掉就干净了。
+光标这一点我一开始判断错了，说是 tkinter 的 `Text` 自带插入符在作怪——那个跟着鼠标跑的竖线确实是另一个东西，
+关掉它（`insertwidth=0`）之后屏幕上干净了，但**真正的问题没解决**：终端光标还是不显示。
 
-复制粘贴那个更简单——`Ctrl+Insert` / `Shift+Insert` 压根没绑，按键落进 `<Key>` 分支被当成终端输入，
+翻渲染代码才看出来，`_render` 里是这么写的：
+
+```python
+for row in range(self.buffer.rows):
+    line_chars, mapping = self._render_row(...)
+    if self._view_offset == 0:
+        cursor_index = (row, mapping.get(self.buffer.cursor_c, line_chars))
+```
+
+`cursor_index` 在每次循环里都被覆盖，循环结束它就等于**最后一行**。于是不管光标在哪，
+反色方块都画在窗口最底下那行——用户说的「光标跑到窗口最下面」其实就是它，跟插入符没关系。
+
+改掉之后还剩一个问题：光标落在行尾时，后面没有字符可以染色，`tag_add` 加了个空范围，
+等于什么都没画。所以在行尾补一个空格当占位：
+
+```python
+if self._view_offset == 0 and row == self.buffer.cursor_r:
+    cursor_index = (row, mapping.get(self.buffer.cursor_c, line_chars))
+...
+if c >= line_len:
+    self.text.insert(f"{r + 1}.end", " ")
+```
+
+`insertwidth=0` 那条也留着，不然 Text 的竖线会跟着鼠标在终端里到处跑，看着更乱。
+两个一起改完，提示符后面才稳稳显示一个反色方块，光标在哪行就画在哪行。
+
+复制粘贴那个简单——`Ctrl+Insert` / `Shift+Insert` 压根没绑，按键落进 `<Key>` 分支被当成终端输入，
 `Insert` 的转义序列 `\x1b[2~` 直接发给了服务器，bash 原样插进去还回显出来。
 用户截图最后一行那串 `^[[2~` 就是这个，不是「复制没反应」。
 
@@ -297,6 +323,7 @@ def _go_up(self):
 - 双击 `桌面版.bat` → 窗口正常，标题对
 - 连 Ubuntu 云主机 → 提示符、banner、MOTD 都对
 - 终端里敲 `echo abcdefg` → 完整回显并输出
+- 光标 → 提示符后面一个反色方块，光标在哪行就画在哪行
 - 文件页压到 620px 高 → 四个按钮都在
 - 点「上级目录」→ 本地远端各退一层
 - 接口联调 → 20/20（[E2E-CHECK.md](E2E-CHECK.md)）

@@ -212,13 +212,18 @@ class TerminalView(ttk.Frame):
         cursor_index = None
         for row in range(self.buffer.rows):
             line_chars, mapping = self._render_row(self._cells_for(row))
-            if self._view_offset == 0:
+            if self._view_offset == 0 and row == self.buffer.cursor_r:
                 cursor_index = (row, mapping.get(self.buffer.cursor_c, line_chars))
             if row < self.buffer.rows - 1:
                 self.text.insert("end", "\n")
 
         if self._view_offset == 0 and self.buffer.cursor_visible and cursor_index:
             r, c = cursor_index
+            # 光标落在行尾时后面没有字符可以染色，补个空格占位。
+            # 不补的话提示符后面看上去完全没有光标（Text 自带的插入符已经被 insertwidth=0 关掉了）
+            line_len = int(self.text.index(f"{r + 1}.end").split(".")[1])
+            if c >= line_len:
+                self.text.insert(f"{r + 1}.end", " ")
             idx = f"{r + 1}.{c}"
             self.text.tag_add("cursor", idx, f"{r + 1}.{c + 1}")
             self.text.mark_set("insert", idx)
