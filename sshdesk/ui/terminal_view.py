@@ -226,6 +226,9 @@ class TerminalView(ttk.Frame):
                 self.text.insert(f"{r + 1}.end", " ")
             idx = f"{r + 1}.{c}"
             self.text.tag_add("cursor", idx, f"{r + 1}.{c + 1}")
+            # 每个字符都挂着 ANSI tag（而且带背景色），它比 cursor 创建得晚、优先级更高，
+            # 会把光标的反色背景盖掉。这里把 cursor 提到最上层，光标才看得见。
+            self.text.tag_raise("cursor")
             self.text.mark_set("insert", idx)
         self.text.see(f"{cursor_index[0] + 1}.0" if cursor_index else "end")
 
