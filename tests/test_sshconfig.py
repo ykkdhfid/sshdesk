@@ -76,8 +76,12 @@ def test_inline_equals_syntax():
 
 
 def test_expand_identity_path():
-    assert expand_identity_path("%d/.ssh/id_rsa").endswith("/.ssh/id_rsa")
-    assert expand_identity_path("~/.ssh/id_rsa").startswith("/")
+    # 用 Path 比较而不是字符串前缀：Windows 上展开出来是 C:\Users\...\.ssh\id_rsa，
+    # 断言 "/" 开头或 "/.ssh/id_rsa" 结尾只对 POSIX 成立。
+    expanded = Path(expand_identity_path("%d/.ssh/id_rsa"))
+    assert expanded.name == "id_rsa"
+    assert expanded.parent.name == ".ssh"
+    assert expand_identity_path("~/.ssh/id_rsa") == str(Path.home() / ".ssh" / "id_rsa")
 
 
 def test_to_server_config_falls_back_to_agent(tmp_path):

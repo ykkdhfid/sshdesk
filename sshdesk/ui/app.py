@@ -27,24 +27,24 @@ DEMO_SCREEN = (
     "\x1b[38;5;114m│\x1b[0m  \x1b[1mSSHDesk\x1b[0m · 本地桌面 SSH 运维客户端        \x1b[38;5;114m│\x1b[0m\r\n"
     "\x1b[38;5;114m│\x1b[0m  Ubuntu 22.04.4 LTS · 2 vCPU · 2 GiB · 成都       \x1b[38;5;114m│\x1b[0m\r\n"
     "\x1b[38;5;114m╰──────────────────────────────────────────────────────────────╯\x1b[0m\r\n\r\n"
-    "\x1b[38;5;244mLast login: Sat Nov  8 09:12:41 2026 from 172.29.79.1\x1b[0m\r\n"
-    "root@iZbam4b688h2pd:~# \x1b[1mneofetch\x1b[0m\r\n"
+    "\x1b[38;5;244mLast login: Sat Nov  8 09:12:41 2026 from 172.16.0.1\x1b[0m\r\n"
+    "root@demo-host:~# \x1b[1mneofetch\x1b[0m\r\n"
     "  \x1b[38;5;39mOS\x1b[0m      Ubuntu 22.04.4 LTS x86_64\r\n"
     "  \x1b[38;5;39mHost\x1b[0m    Alibaba Cloud ecs.e-c1m1.large\r\n"
     "  \x1b[38;5;39mKernel\x1b[0m  5.15.0-119-generic\r\n"
     "  \x1b[38;5;39mCPU\x1b[0m     Intel Xeon Platinum (2) @ 2.5GHz\r\n"
     "  \x1b[38;5;39mMemory\x1b[0m  612MiB / 1944MiB\r\n"
     "  \x1b[38;5;39mDisk\x1b[0m    7.8G / 39.3G (21%)\r\n\r\n"
-    "root@iZbam4b688h2pd:~# \x1b[1msystemctl status ssh --no-pager\x1b[0m\r\n"
+    "root@demo-host:~# \x1b[1msystemctl status ssh --no-pager\x1b[0m\r\n"
     "\x1b[32m●\x1b[0m ssh.service - OpenBSD Secure Shell server\r\n"
     "     Loaded: loaded (/lib/systemd/system/ssh.service; enabled)\r\n"
     "     \x1b[32mActive: active (running)\x1b[0m since Sat 2026-11-08 07:30:11 CST\r\n"
     "     Docs: man:sshd(8)\r\n\r\n"
-    "root@iZbam4b688h2pd:~# \x1b[1mtop -bn1 | head -5\x1b[0m\r\n"
+    "root@demo-host:~# \x1b[1mtop -bn1 | head -5\x1b[0m\r\n"
     "top - 09:15:02 up 13:23,  1 user,  load average: 0.08, 0.12, 0.09\r\n"
     "Tasks:  98 total,   1 running,  97 sleeping\r\n"
     "\x1b[38;5;203m%Cpu(s):  1.3 us,\x1b[0m  0.7 sy,  0.0 ni, \x1b[38;5;114m97.8 id\x1b[0m\r\n\r\n"
-    "root@iZbam4b688h2pd:~# \x1b[7m \x1b[0m\r\n"
+    "root@demo-host:~# \x1b[7m \x1b[0m\r\n"
 )
 
 
@@ -96,8 +96,8 @@ class App(tk.Tk):
     def __init__(self, demo: bool = False) -> None:
         super().__init__()
         self.title("SSHDesk · 远程服务器工作台")
-        self.geometry("1200x780")
-        self.minsize(980, 640)
+        self._fit_to_screen()
+        self.minsize(1000, 660)
         apply_theme(self)
 
         self.demo = demo
@@ -112,6 +112,20 @@ class App(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         if demo:
             self._open_demo()
+
+    def _fit_to_screen(self) -> None:
+        """按屏幕尺寸决定窗口大小并居中。
+
+        之前写死 1200x780：1080p 上偏小，缩放屏上又容易顶到屏幕下边缘，
+        文件页底部那排按钮就被推出可视区。
+        """
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        w = max(1120, min(int(sw * 0.90), 1720))
+        h = max(720, min(int(sh * 0.88), 1080))
+        x = max(0, (sw - w) // 2)
+        y = max(0, (sh - h) // 2 - 24)
+        self.geometry(f"{w}x{h}+{x}+{y}")
 
     # -------------------------------------------------------------- 星空动画
     def _tick_stars(self, phase: float = 0.0) -> None:
@@ -536,7 +550,7 @@ class App(tk.Tk):
         self._paint(text, buffer)
         tabs.add(term, text="终端")
 
-        demo_server = ServerConfig(name="演示主机", host="172.29.79.212", username="root")
+        demo_server = ServerConfig(name="演示主机", host="172.16.0.12", username="root")
         monitor = MonitorView(tabs, demo_server, self.credentials, demo=True,
                               on_status=self.set_status)
         tabs.add(monitor, text="监控")
@@ -609,7 +623,30 @@ class App(tk.Tk):
         self.destroy()
 
 
+def _enable_windows_dpi_awareness() -> None:
+    """Windows 上声明 DPI 感知，必须在创建 Tk 之前调用。
+
+    不声明的话系统会把整个窗口当位图拉伸到 125% / 150%，
+    结果是字发虚、控件边缘发糊，而且窗口尺寸按"虚拟分辨率"算，看着偏小。
+    """
+    import sys
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)   # Win10 1703+ per-monitor v2
+        except Exception:
+            try:
+                ctypes.windll.shcore.SetProcessDpiAwareness(1)
+            except Exception:
+                ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
+
 def run(demo: bool = False) -> int:
+    _enable_windows_dpi_awareness()
     app = App(demo=demo)
     app.mainloop()
     return 0

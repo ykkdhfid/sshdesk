@@ -129,7 +129,9 @@ def expand_identity_path(value: str) -> str:
     if not value:
         return ""
     value = value.replace("%d", str(Path.home()))
-    return os.path.expanduser(value)
+    # expanduser 只替换开头那段 ~，分隔符原样保留。Windows 上会得到
+    # C:\Users\x/.ssh/id_rsa 这种混用路径，虽然能用，但再走一次 Path 统一成本机风格。
+    return str(Path(os.path.expanduser(value)))
 
 
 def to_server_config(entry: SshHostEntry, group: str = DEFAULT_GROUP) -> ServerConfig:

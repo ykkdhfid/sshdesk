@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import queue
 import socket
+import sys
 import threading
 import tkinter as tk
 from tkinter import font as tkfont, ttk
@@ -98,6 +99,28 @@ class TerminalView(ttk.Frame):
         self.text.bind("<Prior>", lambda e: self._scroll_history(self.buffer.rows - 1))
         self.text.bind("<Next>", lambda e: self._scroll_history(-(self.buffer.rows - 1)))
         self.text.focus_set()
+        self._disable_windows_ime()
+
+    def _disable_windows_ime(self) -> None:
+        """把输入法从终端控件上摘掉（仅 Windows）。
+
+        Tk 的 Text 在中文输入法激活时，字母会先被 IME 接走组词，Key 事件里的 char 是空串，
+        字符根本到不了终端——表现就是回车能用、字母一个也打不进去。切断 IMContext 关联后，
+        每个按键直接作为 Key 事件交给 Tk，和 PuTTY / Xshell 这类原生命令行一致。
+        代价：终端里不直接支持中文输入（SSH 命令行极少需要，真要输可以在别处打好再粘贴）。
+        """
+        import sys
+        if sys.platform != "win32":
+            return
+        try:
+            import ctypes
+            from ctypes import wintypes
+            imm32 = ctypes.WinDLL("imm32")
+            imm32.ImmAssociateContext.argtypes = [wintypes.HWND, wintypes.HANDLE]
+            imm32.ImmAssociateContext.restype = wintypes.HANDLE
+            imm32.ImmAssociateContext(self.text.winfo_id(), 0)
+        except Exception:
+            pass
 
     def _open_shell(self) -> None:
         try:
@@ -297,7 +320,13 @@ class TerminalView(ttk.Frame):
         state = event.state
         ctrl = bool(state & 0x4)
         shift = bool(state & 0x1)
-        alt = bool(state & 0x8)
+        # Alt 的状态位两个平台不同：X11 上是 Mod1(0x8)，Windows 上的 Tk 用 0x20000。
+        # 实测 Windows 下即使不按任何修饰键 state 也恒为 0x8；照 0x8 判 Alt 会给每个字符
+        # 前面多塞一个 ESC，服务器收到的是 Alt+字母（bash 回显 ^[a），看着就是"打不进字"。
+        if sys.platform == "win32":
+            alt = bool(state & 0x20000)
+        else:
+            alt = bool(state & 0x8)
         keysym = event.keysym
 
         if ctrl and shift and keysym.lower() in ("c", "v"):

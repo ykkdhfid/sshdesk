@@ -10,6 +10,8 @@
 
 🔌 **前后端到底通没通：[docs/E2E-CHECK.md](docs/E2E-CHECK.md)**（接口 20 项 + 浏览器流程 26 项，含 4401/4404/4502 语义）
 
+🧱 **踩过的坑都在这里：[docs/DEVELOPMENT-NOTES.md](docs/DEVELOPMENT-NOTES.md)**（17 个真实问题，从 GBK 编码、Tk 状态位到 DPI，每个都写了现象、根因和验证方式）
+
 一个跑在自己电脑上的 SSH 客户端：管多台 Linux 服务器、真终端交互、传文件、看监控、
 连不上时告诉你卡在哪一步。不用装 XShell / SecureCRT，也不需要给服务器装任何 Web 面板。
 
@@ -71,6 +73,14 @@ python -m sshdesk web --port 8080
 ```
 
 Windows 双击 `start.bat`，macOS / Linux 执行 `bash start.sh` 即可（会自动建虚拟环境）。
+
+> **Windows 上装在含中文的路径里时**（例如 `E:\ssh Linux远程连接\`）：
+> 别在 cmd 里手敲带中文的路径——GBK 代码页会把它吃成乱码字节；
+> `start.bat` 里也不要用 `chcp 65001` 配 GBK 保存的文件，代码页和文件编码打架，
+> 脚本里的中文目录名会变成乱码，`cd` 失败后程序退到上级目录建一个空壳 `.venv`，
+> 最后报 `No module named sshdesk`。
+> 稳妥做法是让脚本用 `%~dp0` 自己定位、设 `PYTHONPATH` 指向源码目录，完全不依赖当前目录。
+> 三条报错的原文和修法见 [docs/DEVELOPMENT-NOTES.md](docs/DEVELOPMENT-NOTES.md) 第 8~10 条。
 
 ### 第一次添加服务器
 

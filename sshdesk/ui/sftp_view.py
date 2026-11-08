@@ -37,15 +37,31 @@ class SftpView(ttk.Frame):
     # ------------------------------------------------------------------ UI
     def _build(self) -> None:
         bar = ttk.Frame(self)
-        bar.pack(fill="x", pady=(0, 10))
+        bar.pack(side="top", fill="x", pady=(0, 10))
         ttk.Label(bar, text="本地 → 远端", style="Muted.TLabel").pack(side="left")
         ttk.Button(bar, text="上传选中", style="Accent.TButton",
                    command=self._upload_selected).pack(side="right", padx=(8, 0))
         ttk.Button(bar, text="刷新远端", style="TButton",
                    command=self.load_remote).pack(side="right")
 
+        # 底部的路径行和操作按钮先 pack(side="bottom") 占位，
+        # 这样窗口变矮时优先保住它们，不会被中间的文件列表挤到屏幕外。
+        actions = ttk.Frame(self)
+        actions.pack(side="bottom", fill="x", pady=(8, 0))
+        ttk.Button(actions, text="下载选中", command=self._download_selected).pack(side="left")
+        ttk.Button(actions, text="上级目录", command=self._go_up).pack(side="left", padx=6)
+        ttk.Button(actions, text="新建目录", command=self._mkdir).pack(side="left")
+        ttk.Button(actions, text="删除", command=self._delete).pack(side="left", padx=6)
+        self.progress = ttk.Progressbar(actions, mode="determinate", length=180, maximum=100)
+        self.progress.pack(side="right")
+
+        self.local_path = tk.StringVar(value=str(self.local_dir))
+        self.remote_path = tk.StringVar(value=self.remote_dir)
+        ttk.Label(self, textvariable=self.remote_path, style="Muted.TLabel").pack(side="bottom", anchor="w")
+        ttk.Label(self, textvariable=self.local_path, style="Muted.TLabel").pack(side="bottom", anchor="w", pady=(8, 0))
+
         panes = ttk.Frame(self)
-        panes.pack(fill="both", expand=True)
+        panes.pack(side="top", fill="both", expand=True)
         panes.columnconfigure(0, weight=1, uniform="pane")
         panes.columnconfigure(1, weight=1, uniform="pane")
         panes.rowconfigure(0, weight=1)
@@ -54,20 +70,6 @@ class SftpView(ttk.Frame):
         self.local_tree.master.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
         self.remote_tree = self._make_tree(panes, "远端文件")
         self.remote_tree.master.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
-
-        self.local_path = tk.StringVar(value=str(self.local_dir))
-        self.remote_path = tk.StringVar(value=self.remote_dir)
-        ttk.Label(self, textvariable=self.local_path, style="Muted.TLabel").pack(anchor="w", pady=(8, 0))
-        ttk.Label(self, textvariable=self.remote_path, style="Muted.TLabel").pack(anchor="w")
-
-        actions = ttk.Frame(self)
-        actions.pack(fill="x", pady=(8, 0))
-        ttk.Button(actions, text="下载选中", command=self._download_selected).pack(side="left")
-        ttk.Button(actions, text="上级目录", command=self._go_up).pack(side="left", padx=6)
-        ttk.Button(actions, text="新建目录", command=self._mkdir).pack(side="left")
-        ttk.Button(actions, text="删除", command=self._delete).pack(side="left", padx=6)
-        self.progress = ttk.Progressbar(actions, mode="determinate", length=180, maximum=100)
-        self.progress.pack(side="right")
 
         self.local_tree.bind("<Double-1>", lambda e: self._open_local())
         self.remote_tree.bind("<Double-1>", lambda e: self._open_remote())
@@ -222,6 +224,10 @@ class SftpView(ttk.Frame):
         threading.Thread(target=worker, daemon=True).start()
 
     def _go_up(self) -> None:
+        # 本地和远端各自退一层：原来只动远端，本地停在原地看着像"点了没反应"。
+        if self.local_dir.parent != self.local_dir:
+            self.local_dir = self.local_dir.parent
+            self.load_local()
         if self.browser:
             self.remote_dir = posixpath.dirname(self.remote_dir.rstrip("/")) or "/"
             self.load_remote()

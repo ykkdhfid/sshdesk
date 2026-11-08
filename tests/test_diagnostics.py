@@ -36,7 +36,7 @@ class _FakeSSHServer:
 
 
 def test_private_address_detection():
-    assert is_private_host("172.29.79.212") is True   # 阿里云 VPC 私网
+    assert is_private_host("172.16.0.12") is True   # 阿里云 VPC 私网
     assert is_private_host("10.0.0.8") is True
     assert is_private_host("192.168.1.5") is True
     assert is_private_host("100.64.1.1") is True      # 运营商级 NAT
@@ -77,7 +77,7 @@ def test_probe_closed_port_reports_error():
 
 
 def test_diagnose_private_ip_suggests_public_ip():
-    server = ServerConfig(name="阿里云成都", host="172.29.79.212", username="root",
+    server = ServerConfig(name="阿里云成都", host="172.16.0.12", username="root",
                           auth_type="agent", timeout=1)
     report = diagnose(server, timeout=1)
     assert report.level in ("warn", "error")

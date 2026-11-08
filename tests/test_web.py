@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
@@ -113,5 +115,7 @@ def test_token_file_permissions(tmp_path, monkeypatch):
     assert len(token) >= 20
     path = tmp_path / "web_token"
     assert path.exists()
-    assert (path.stat().st_mode & 0o777) == 0o600
+    # Windows 上 chmod 不映射成 NTFS 权限，st_mode 恒为 0o666，只能跳过这条
+    if sys.platform != "win32":
+        assert (path.stat().st_mode & 0o777) == 0o600
     assert load_or_create_token() == token
