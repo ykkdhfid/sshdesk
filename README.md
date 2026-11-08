@@ -10,7 +10,7 @@
 
 🔌 **前后端到底通没通：[docs/E2E-CHECK.md](docs/E2E-CHECK.md)**（接口 20 项 + 浏览器流程 26 项，含 4401/4404/4502 语义）
 
-🧱 **踩过的坑都在这里：[docs/DEVELOPMENT-NOTES.md](docs/DEVELOPMENT-NOTES.md)**（17 个真实问题，从 GBK 编码、Tk 状态位到 DPI，每个都写了现象、根因和验证方式）
+🧱 **踩过的坑都在这里：[docs/DEVELOPMENT-NOTES.md](docs/DEVELOPMENT-NOTES.md)**（按遇到的顺序记的，从容器联调到 Windows 真机，包括那个让终端打不进字的 Alt 状态位）
 
 一个跑在自己电脑上的 SSH 客户端：管多台 Linux 服务器、真终端交互、传文件、看监控、
 连不上时告诉你卡在哪一步。不用装 XShell / SecureCRT，也不需要给服务器装任何 Web 面板。
