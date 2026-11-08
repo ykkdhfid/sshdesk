@@ -331,6 +331,38 @@ def _go_up(self):
 
 ---
 
+## 六、CI 从第一版就是红的
+
+推上去以后 GitHub 一直发通知，六条 `CI workflow run failed`，每次推送都失败。
+
+一开始我以为又是 Windows 平台差异——本地明明跑得好好的。翻了运行记录才发现，
+从第一次推送 `8e4dea0` 起就是红的，这套 CI 从来没成功过一次。
+
+去 Linux 机器上把仓库拉下来重跑，才看清真正的报错：
+
+```
+ERROR collecting tests/test_web.py
+RuntimeError: The starlette.testclient module requires the httpx2 package to be installed.
+```
+
+`tests/test_web.py` 里有一句 `from fastapi.testclient import TestClient`，新版 starlette
+缺 `httpx2` 的时候不是给个警告就算了，而是直接抛 RuntimeError，pytest 在收集阶段就中断。
+所以界面上只留一句 `Process completed with exit code 2`，什么都看不出来。
+
+本地为什么没事：这台机器的 venv 里是旧一点的 starlette 加 httpx，打一条弃用警告就过去了。
+
+第二个坑在 workflow 里。原本是 `setup-python` 装解释器，再 `apt install python3-tk`。
+但 tkinter 是编译进解释器的 C 扩展，apt 那个 `python3-tk` 只对系统解释器生效，
+`setup-python` 装的是另一套，`import tkinter` 照样失败。所以补上 httpx2 也只是让第一步过去，
+桌面版的测试会在下一步接着挂。
+
+改成用系统 python3 建 venv，tkinter 天然继承下来；测试依赖单独放 `requirements-dev.txt`
+（`httpx2` 那段上面写了注释说明为什么需要它）；静态检查和 pytest 都用 `python -m` 调，
+保证跟 venv 里那一套是同一个。
+
+改完第一次跑就绿了。README 上原来那个 `tests 88 passed` 是写死的静态徽章，永远不会变，
+这次换成了真实的 workflow 状态徽章——红不红它自己会说，不用再猜。
+
 ## 最后跑一遍
 
 每次改完都重跑这几项，当前状态：
@@ -344,6 +376,7 @@ def _go_up(self):
 - 点「上级目录」→ 本地远端各退一层
 - 接口联调 → 20/20（[E2E-CHECK.md](E2E-CHECK.md)）
 - 浏览器流程 → 26/26（[E2E-CHECK.md](E2E-CHECK.md)）
+- 推到 GitHub → Actions 那个勾是绿的
 
 ---
 

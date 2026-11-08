@@ -1,6 +1,6 @@
 # SSHDesk · 本地桌面 SSH 运维客户端
 
-![tests](https://img.shields.io/badge/tests-88%20passed-7b9df0)
+![CI](https://github.com/ykkdhfid/sshdesk/actions/workflows/ci.yml/badge.svg)
 ![python](https://img.shields.io/badge/python-3.10%2B-4a6a9e)
 ![license](https://img.shields.io/badge/license-MIT-4a6a9e)
 
