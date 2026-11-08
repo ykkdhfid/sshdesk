@@ -70,7 +70,7 @@ class TerminalView(ttk.Frame):
             self, bg=TERM_BG, fg=TERM_FG, insertbackground=TERM_FG, font=mono,
             wrap="none", undo=False, highlightthickness=0, borderwidth=0,
             padx=8, pady=6, selectbackground="#1d2b4a", selectforeground="#ffffff",
-            cursor="xterm", spacing1=0, spacing2=0, spacing3=0,
+            cursor="xterm", spacing1=0, spacing2=0, spacing3=0, insertwidth=0,
         )
         scroll = ttk.Scrollbar(self, orient="vertical", command=self.text.yview)
         self.text.configure(yscrollcommand=scroll.set)
@@ -90,6 +90,20 @@ class TerminalView(ttk.Frame):
         self.text.bind("<Control-Shift-Key-v>", self._paste)
         self.text.bind("<Control-Shift-Key-V>", self._paste)
         self.text.bind("<Control-Shift-Insert>", self._paste)
+        # Windows 的习惯：Ctrl+Insert 复制、Shift+Insert 粘贴。
+        # 这两个键原来没绑定，按下去会走 <Key> 把 "\x1b[2~" 当输入发给远端，
+        # 屏幕上就多出一串 ^[[2~ —— 看着像"复制没反应还乱码"。
+        self.text.bind("<Control-Insert>", self._copy)
+        self.text.bind("<Shift-Insert>", self._paste)
+        self.text.bind("<Control-c>", self._on_ctrl_c)
+        self.text.bind("<Control-v>", self._paste)
+
+        self._menu = tk.Menu(self, tearoff=0)
+        self._menu.add_command(label="复制", command=self._copy)
+        self._menu.add_command(label="粘贴", command=self._paste)
+        self._menu.add_command(label="全选", command=self._select_all)
+        self.text.bind("<Button-3>", self._popup_menu)
+
         self.text.bind("<Configure>", self._on_resize)
         self.text.bind("<<Paste>>", lambda e: "break")
         # 滚动历史：Windows/macOS 用 MouseWheel，X11 用 Button-4/5
@@ -364,6 +378,23 @@ class TerminalView(ttk.Frame):
         if event.char and (event.char.isprintable() or event.char == " "):
             self.send(("\x1b" + event.char) if alt else event.char)
             return "break"
+        return "break"
+
+    def _on_ctrl_c(self, event=None) -> str:
+        """有选中内容就复制；没有选中才把 Ctrl+C 当成中断信号发给远端。"""
+        if self.text.tag_ranges("sel"):
+            return self._copy()
+        self.send("\x03")
+        return "break"
+
+    def _select_all(self) -> None:
+        self.text.tag_add("sel", "1.0", "end-1c")
+
+    def _popup_menu(self, event) -> str:
+        try:
+            self._menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self._menu.grab_release()
         return "break"
 
     def _copy(self, event=None) -> str:
