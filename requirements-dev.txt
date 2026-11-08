@@ -1,0 +1,10 @@
+-r requirements.txt
+
+# 测试与静态检查用
+pytest>=8.0
+pyflakes>=3.0
+
+# tests/test_web.py 通过 fastapi.testclient 建客户端，新版 starlette 要求装这个，
+# 否则 import 阶段就抛 RuntimeError，pytest 收集直接中断（退出码 2）。
+# 只在跑测试时需要，跑程序本身不需要。
+httpx2
