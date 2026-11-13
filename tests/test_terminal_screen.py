@@ -100,6 +100,12 @@ def test_osc_sets_title():
     assert buf.title == "root@server: ~"
 
 
+def test_charset_select_sequence_swallowed():
+    # nano 等全屏程序发 ESC ( B 切回 ASCII 字符集，末尾的 B 不能漏到屏幕上
+    buf = feed("\x1b(B[Unit]\x1b(BDescription=demo")
+    assert buf.line_text(0) == "[Unit]Description=demo"
+
+
 def test_ansi256_palette():
     assert ansi256_to_hex(0) == "#000000"
     assert ansi256_to_hex(196) == "#ff0000"

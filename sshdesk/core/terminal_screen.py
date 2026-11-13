@@ -183,6 +183,10 @@ class ScreenBuffer:
         if nxt == "c":
             self.reset()
             return i + 2
+        if nxt in "()*+,-./#":
+            # 字符集选择（SCS）/ DEC 行属性：ESC <中间字节> <最终字节>，
+            # 例如 ESC ( B 切回 ASCII。整段忽略，不能把末尾的字母漏成普通字符。
+            return min(i + 3, n)
         return i + 2
 
     # ------------------------------------------------------------------ 绘制
